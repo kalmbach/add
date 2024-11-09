@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# chek if current path is a git repo
+git rev-parse --is-inside-work-tree 1> /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "There is no git repository in the current path."
+  exit
+fi
+
+# check if gum is present
+if ! command -v gum &> /dev/null; then
+  echo "This script requires gum (https://github.com/charmbracelet/gum)"
+  exit
+fi
+
+if [ $# -eq 0 ]; then
+  modified_and_untracked=$(git status -s | awk '{print $2}')
+  staged=$(git status -s | grep '^[A-Z]' | awk '{print $2}')
+  selected_csv=$(echo $staged | tr ' ' ',' | head -c -1)
+
+  files=$( 
+    gum choose \
+      --header="Choose files/directories to add:" \
+      --cursor-prefix="[] " \
+      --selected-prefix="[x] " \
+      --unselected-prefix="[] " \
+      --item.foreground="210" \
+      --header.foreground="" \
+      --selected.foreground="114" \
+      --no-limit \
+      --selected=$selected_csv \
+      $modified_and_untracked
+  )
+elif [ $# -eq 1] && [ $1 = "-A"]; then
+  # add modified and untracked
+  files=$(git status -s | awk '{print $2}')
+else
+  files=$@
+fi
+
+if ! [ -z "$staged" ]; then
+  git restore --staged $staged
+fi
+
+if ! [ -z "$files" ]; then
+  git add $files
+fi
+
+git status -s
