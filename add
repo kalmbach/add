@@ -18,6 +18,11 @@ if [ $# -eq 0 ]; then
   staged=$(git status -s | grep '^[A-Z]' | awk '{print $2}')
   selected_csv=$(echo $staged | tr ' ' ',' | head -c -1)
 
+  if [ -z "$modified_and_untracked" ]; then
+    echo "Nothing to commit, the working tree is clean."
+    exit
+  fi
+
   files=$( 
     gum choose \
       --header="Choose files/directories to add:" \
@@ -31,15 +36,33 @@ if [ $# -eq 0 ]; then
       --selected=$selected_csv \
       $modified_and_untracked
   )
-elif [ $# -eq 1] && [ $1 = "-A"]; then
+elif [ $# -eq 1 ] && [ $1 = "-A" ]; then
   # add modified and untracked
   files=$(git status -s | awk '{print $2}')
 else
   files=$@
 fi
 
+
 if ! [ -z "$staged" ]; then
-  git restore --staged $staged
+  # check if we need to restore a file that
+  # was already staged
+  content_staged=($staged)
+  content_to_add=($files)
+  content_to_restore=()
+
+  for s in "${content_staged[@]}"; do
+    keep=
+    for f in "${content_to_add[@]}"; do 
+      [[ $s == $f ]] && { keep=1; break; }
+    done
+
+    [[ -n $keep ]] || content_to_restore+=("$s")
+  done
+
+  if ! [ -z "$content_to_restore" ]; then
+    git restore --staged $content_to_restore
+  fi
 fi
 
 if ! [ -z "$files" ]; then
