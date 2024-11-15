@@ -1,6 +1,8 @@
 # add
 interactive bash script to add content to git index
 
+![demo](https://github.com/user-attachments/assets/d8e66384-b9fe-4309-ae75-af31e3e088fd)
+
 ## requirements
 [https://github.com/charmbracelet/gum](https://github.com/charmbracelet/gum).
 
