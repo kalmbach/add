@@ -61,7 +61,7 @@ if ! [ -z "$staged" ]; then
   done
 
   if ! [ -z "$content_to_restore" ]; then
-    git restore --staged $content_to_restore
+    git restore --staged ${content_to_restore[@]}
   fi
 fi
 
